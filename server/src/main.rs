@@ -1,9 +1,7 @@
 use std::env;
-use std::sync::Arc;
 
-use juniper::{EmptyMutation, EmptySubscription, RootNode, FieldResult, GraphQLObject, Context};
+use juniper::{EmptyMutation, EmptySubscription, RootNode, FieldResult, GraphQLObject};
 use warp::{http::Response, Filter};
-
 
 pub struct QueryRoot;
 
@@ -21,7 +19,7 @@ struct Person {
 
 #[juniper::graphql_object(Context = GraphQLContext)]
 impl QueryRoot {
-    async fn person(context: &GraphQLContext) -> FieldResult<Person> {
+    async fn person(_context: &GraphQLContext) -> FieldResult<Person> {
         Ok(Person {
             name: "Reidar".to_string(),
             age: 51,
@@ -66,7 +64,7 @@ async fn main() {
     log::info!("Listening on 127.0.0.1:8080");
 
     //let app_state = warp::any().map(move || app_state.clone());
-    let ctx = GraphQLContext {};
+    //let ctx = GraphQLContext {};
     let state = warp::any().map(move || GraphQLContext {});
     let graphql_filter = juniper_warp::make_graphql_filter(schema(), state.boxed());
     warp::serve(

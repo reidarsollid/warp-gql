@@ -1,41 +1,11 @@
+mod graphql;
+mod context;
+
 use std::env;
 
-use juniper::{EmptyMutation, EmptySubscription, RootNode, FieldResult, GraphQLObject};
 use warp::{http::Response, Filter};
-
-pub struct QueryRoot;
-
-#[derive(Clone, Copy, Debug)]
-pub struct GraphQLContext {}
-
-impl juniper::Context for GraphQLContext {}
-
-#[derive(GraphQLObject)]
-//#[graphql(description = "User preferences for content", name = "UserPreferences")]
-struct Person {
-    name: String,
-    age: i32,
-}
-
-#[juniper::graphql_object(Context = GraphQLContext)]
-impl QueryRoot {
-    async fn person(_context: &GraphQLContext) -> FieldResult<Person> {
-        Ok(Person {
-            name: "Reidar".to_string(),
-            age: 51,
-        })
-    }
-}
-
-type Schema = RootNode<'static, QueryRoot, EmptyMutation<GraphQLContext>, EmptySubscription<GraphQLContext>>;
-
-fn schema() -> Schema {
-    Schema::new(
-        QueryRoot,
-        EmptyMutation::<GraphQLContext>::new(),
-        EmptySubscription::<GraphQLContext>::new(),
-    )
-}
+use crate::context::GraphQLContext;
+use crate::graphql::schema::schema;
 
 async fn get_alive() -> Result<impl warp::Reply, warp::Rejection> {
     Ok("Ok")
@@ -63,8 +33,6 @@ async fn main() {
 
     log::info!("Listening on 127.0.0.1:8080");
 
-    //let app_state = warp::any().map(move || app_state.clone());
-    //let ctx = GraphQLContext {};
     let state = warp::any().map(move || GraphQLContext {});
     let graphql_filter = juniper_warp::make_graphql_filter(schema(), state.boxed());
     warp::serve(
